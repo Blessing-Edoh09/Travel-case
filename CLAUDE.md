@@ -21,6 +21,18 @@ Never repeat this information here. Read it from the imported files.
 
 Rules live in `.claude/rules/`. They are loaded automatically. One file, one topic.
 
+## WAT Framework
+
+The workspace runs on the WAT architecture: Workflows, Agents, Tools. Full guide:
+`projects/My linkedin contents/wat-architecture.md`.
+
+- Workflows: Markdown SOPs in `projects/My linkedin contents/workflows/`. Read the relevant one
+  before acting.
+- Agents: this role. Coordinate, decide, and delegate execution to tools.
+- Tools: Python scripts in `projects/My linkedin contents/tools/` that do the actual work.
+- Secrets live in `projects/My linkedin contents/.env` only. `.tmp/` is disposable and gitignored.
+- Deliverables go to cloud services. Local files are only for processing.
+
 ## Tool Integrations
 
 - Google Workspace (email, calendar, docs)
