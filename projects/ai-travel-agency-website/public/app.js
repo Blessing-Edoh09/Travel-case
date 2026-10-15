@@ -47,6 +47,8 @@ const state = {
   activeDropdown: null, // 'travelers' | 'cabin' | 'hotel-guests' | null
   activeLocationPicker: null, // 'origin' | 'destination' | 'leg-orig-${idx}' | 'leg-dest-${idx}' | 'hotel-destination' | 'car-location' | 'transfer-pickup' | 'transfer-dropoff' | null
   locationSearchQuery: '',
+  currency: localStorage.getItem('tc_currency') || 'NGN',
+  isCurrencyDropdownOpen: false,
   adminViewSubTab: 'approvals', // 'approvals' | 'caps' | 'bookings'
   selectedHotel: null,
   lastBooking: null
@@ -57,8 +59,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   await checkSession();
   setupRouting();
   renderCurrentView();
+  updateHeaderCurrencyBadge();
 
-  // Close search popovers and location dropdowns when clicking outside
+  // Close search popovers, location dropdowns, and currency dropdown when clicking outside
   document.addEventListener('click', (e) => {
     let needsRerender = false;
     if (state.activeDropdown) {
@@ -72,6 +75,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         state.activeLocationPicker = null;
         state.locationSearchQuery = '';
         needsRerender = true;
+      }
+    }
+    if (state.isCurrencyDropdownOpen) {
+      if (!e.target.closest('#currency-picker-wrapper')) {
+        closeCurrencyDropdown();
       }
     }
     if (needsRerender) {
@@ -277,7 +285,7 @@ function getHomeViewHtml() {
             <p class="dest-country">Direct flights from LOS</p>
             <div class="dest-price-row">
               <span class="dest-price-label">FROM</span>
-              <span class="dest-price-value">₦410,000</span>
+              <span class="dest-price-value">${formatMoney(410000)}</span>
             </div>
           </div>
         </div>
@@ -291,7 +299,7 @@ function getHomeViewHtml() {
             <p class="dest-country">Corporate hubs</p>
             <div class="dest-price-row">
               <span class="dest-price-label">FROM</span>
-              <span class="dest-price-value">₦320,500</span>
+              <span class="dest-price-value">${formatMoney(320500)}</span>
             </div>
           </div>
         </div>
@@ -305,7 +313,7 @@ function getHomeViewHtml() {
             <p class="dest-country">Business class deals</p>
             <div class="dest-price-row">
               <span class="dest-price-label">FROM</span>
-              <span class="dest-price-value">₦850,000</span>
+              <span class="dest-price-value">${formatMoney(850000)}</span>
             </div>
           </div>
         </div>
@@ -319,7 +327,7 @@ function getHomeViewHtml() {
             <p class="dest-country">Quick connections</p>
             <div class="dest-price-row">
               <span class="dest-price-label">FROM</span>
-              <span class="dest-price-value">₦185,000</span>
+              <span class="dest-price-value">${formatMoney(185000)}</span>
             </div>
           </div>
         </div>
@@ -438,6 +446,89 @@ function getHomeViewHtml() {
       </div>
     </footer>
   `;
+}
+
+// --- Multi-Currency System ---
+const SUPPORTED_CURRENCIES = {
+  NGN: { code: 'NGN', symbol: '₦', name: 'Nigerian Naira', flag: '🇳🇬', rate: 1.0 },
+  USD: { code: 'USD', symbol: '$', name: 'US Dollar', flag: '🇺🇸', rate: 1 / 1500 },
+  GBP: { code: 'GBP', symbol: '£', name: 'British Pound', flag: '🇬🇧', rate: 1 / 1950 },
+  EUR: { code: 'EUR', symbol: '€', name: 'Euro', flag: '🇪🇺', rate: 1 / 1650 },
+  CAD: { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar', flag: '🇨🇦', rate: 1 / 1100 },
+  GHS: { code: 'GHS', symbol: 'GH₵', name: 'Ghanaian Cedi', flag: '🇬🇭', rate: 1 / 100 },
+  KES: { code: 'KES', symbol: 'KSh', name: 'Kenyan Shilling', flag: '🇰🇪', rate: 1 / 11.5 },
+  AED: { code: 'AED', symbol: 'AED', name: 'UAE Dirham', flag: '🇦🇪', rate: 1 / 408 },
+  ZAR: { code: 'ZAR', symbol: 'R', name: 'South African Rand', flag: '🇿🇦', rate: 1 / 85 }
+};
+
+function formatMoney(amountInNgn, currency = state.currency || 'NGN') {
+  if (amountInNgn === null || amountInNgn === undefined || isNaN(amountInNgn)) return '—';
+  const curr = SUPPORTED_CURRENCIES[currency] || SUPPORTED_CURRENCIES.NGN;
+  const converted = Math.round(Number(amountInNgn) * curr.rate);
+  return `${curr.symbol}${converted.toLocaleString()}`;
+}
+
+function toggleCurrencyDropdown(event) {
+  if (event) event.stopPropagation();
+  state.isCurrencyDropdownOpen = !state.isCurrencyDropdownOpen;
+  renderCurrencyDropdown();
+}
+
+function closeCurrencyDropdown() {
+  state.isCurrencyDropdownOpen = false;
+  const panel = document.getElementById('currency-dropdown-panel');
+  if (panel) panel.style.display = 'none';
+}
+
+function selectCurrency(code, event) {
+  if (event) event.stopPropagation();
+  if (SUPPORTED_CURRENCIES[code]) {
+    state.currency = code;
+    localStorage.setItem('tc_currency', code);
+    updateHeaderCurrencyBadge();
+    closeCurrencyDropdown();
+    renderCurrentView();
+  }
+}
+
+function updateHeaderCurrencyBadge() {
+  const curr = SUPPORTED_CURRENCIES[state.currency] || SUPPORTED_CURRENCIES.NGN;
+  const codeEl = document.getElementById('header-currency-code');
+  const flagEl = document.getElementById('header-currency-flag');
+  if (codeEl) codeEl.textContent = curr.code;
+  if (flagEl) flagEl.textContent = curr.flag;
+}
+
+function renderCurrencyDropdown() {
+  const panel = document.getElementById('currency-dropdown-panel');
+  if (!panel) return;
+
+  if (!state.isCurrencyDropdownOpen) {
+    panel.style.display = 'none';
+    return;
+  }
+
+  const currencies = Object.values(SUPPORTED_CURRENCIES);
+  panel.innerHTML = `
+    <div class="currency-dropdown-header">
+      Select Display Currency
+    </div>
+    <div style="max-height: 280px; overflow-y: auto;">
+      ${currencies.map(c => `
+        <div class="currency-option-item ${state.currency === c.code ? 'selected' : ''}" onclick="selectCurrency('${c.code}', event)">
+          <div class="currency-option-left">
+            <span class="currency-flag">${c.flag}</span>
+            <div>
+              <span class="currency-code">${c.code}</span>
+              <span class="currency-name">${c.name}</span>
+            </div>
+          </div>
+          <span class="currency-symbol-pill">${c.symbol}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  panel.style.display = 'block';
 }
 
 // --- Curated Location & Airport Hub Datasets ---
@@ -1482,8 +1573,8 @@ function getResultsViewHtml() {
         <div class="filter-group" style="margin-bottom: 24px;">
           <input type="range" min="15000" max="1500000" step="10000" value="1200000" style="width: 100%; accent-color: var(--color-accent-gold);" oninput="filterResults()">
           <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--color-slate-muted); margin-top: 6px;">
-            <span>NGN 15,000</span>
-            <span>NGN 1,200,000+</span>
+            <span>${formatMoney(15000)}</span>
+            <span>${formatMoney(1200000)}+</span>
           </div>
         </div>
 
@@ -1636,9 +1727,9 @@ async function loadSearchResults() {
             <div class="price-action-col" style="border-left: 1px solid var(--color-border-line); padding-left: 24px; text-align: right;">
               <div style="font-size: 0.8rem; color: var(--color-slate-muted); margin-bottom: 2px;">Price for stay (7 nights)</div>
               <div class="card-price" style="font-size: 1.4rem; font-weight: 700; color: var(--color-primary); margin-bottom: 6px;">
-                NGN ${Number(h.price).toLocaleString()}
+                ${formatMoney(h.price)}
               </div>
-              ${isAgent ? '<div style="font-size: 0.75rem; font-weight: 700; color: var(--color-success); margin-bottom: 6px;">NET: ₦' + Number(h.net_rate).toLocaleString() + '</div>' : ''}
+              ${isAgent ? '<div style="font-size: 0.75rem; font-weight: 700; color: var(--color-success); margin-bottom: 6px;">NET: ' + formatMoney(h.net_rate) + '</div>' : ''}
               <button type="button" class="btn btn-gold" style="width: 100%; padding: 8px 16px; font-weight: 700; border-radius: 8px; margin-bottom: 6px;" onclick="reserveHotelForCheckout(${JSON.stringify(h).replace(/"/g, '&quot;')})">
                 Reserve Now
               </button>
@@ -1678,10 +1769,10 @@ async function loadSearchResults() {
             <div class="price-action-col" style="border-left: 1px solid var(--color-border-line); padding-left: 24px; text-align: right;">
               <div style="font-size: 0.8rem; color: var(--color-slate-muted); margin-bottom: 2px;">Total 7 days rental</div>
               <div class="card-price" style="font-size: 1.4rem; font-weight: 700; color: var(--color-primary); margin-bottom: 6px;">
-                NGN ${Number(c.price).toLocaleString()}
+                ${formatMoney(c.price)}
               </div>
-              <div style="font-size: 0.8rem; color: var(--color-slate-muted); margin-bottom: 8px;">₦${Number(Math.round(c.price / 7)).toLocaleString()} / day</div>
-              ${isAgent ? '<div style="font-size: 0.75rem; font-weight: 700; color: var(--color-success); margin-bottom: 6px;">NET: ₦' + Number(c.net_rate).toLocaleString() + '</div>' : ''}
+              <div style="font-size: 0.8rem; color: var(--color-slate-muted); margin-bottom: 8px;">${formatMoney(Math.round(c.price / 7))} / day</div>
+              ${isAgent ? '<div style="font-size: 0.75rem; font-weight: 700; color: var(--color-success); margin-bottom: 6px;">NET: ' + formatMoney(c.net_rate) + '</div>' : ''}
               <button type="button" class="btn btn-gold" style="width: 100%; padding: 10px 16px; font-weight: 700; border-radius: 8px;" onclick="selectCarForCheckout(${JSON.stringify(c).replace(/"/g, '&quot;')})">
                 Rent Car
               </button>
@@ -1758,9 +1849,9 @@ async function loadSearchResults() {
             <div class="price-action-col" style="border-left: 1px solid var(--color-border-line); padding-left: 24px; text-align: right;">
               <div style="font-size: 0.8rem; color: var(--color-slate-muted); margin-bottom: 2px;">Fixed guaranteed fare</div>
               <div class="card-price" style="font-size: 1.4rem; font-weight: 700; color: var(--color-primary); margin-bottom: 8px;">
-                NGN ${Number(t.price).toLocaleString()}
+                ${formatMoney(t.price)}
               </div>
-              ${isAgent ? '<div style="font-size: 0.75rem; font-weight: 700; color: var(--color-success); margin-bottom: 6px;">NET: ₦' + Number(t.net_rate).toLocaleString() + '</div>' : ''}
+              ${isAgent ? '<div style="font-size: 0.75rem; font-weight: 700; color: var(--color-success); margin-bottom: 6px;">NET: ' + formatMoney(t.net_rate) + '</div>' : ''}
               <button type="button" class="btn btn-gold" style="width: 100%; padding: 10px 16px; font-weight: 700; border-radius: 8px;" onclick="selectTransferForCheckout(${JSON.stringify(t).replace(/"/g, '&quot;')})">
                 Book Transfer
               </button>
@@ -1818,9 +1909,9 @@ async function loadSearchResults() {
             <div class="price-action-col" style="border-left: 1px solid var(--color-border-line); padding-left: 24px; text-align: right;">
               <div style="font-size: 0.8rem; color: var(--color-slate-muted); margin-bottom: 2px;">Price per adult</div>
               <div class="card-price" style="font-size: 1.4rem; font-weight: 700; color: var(--color-primary); margin-bottom: 8px;">
-                NGN ${Number(f.price).toLocaleString()}
+                ${formatMoney(f.price)}
               </div>
-              ${isAgent ? '<div style="font-size: 0.75rem; font-weight: 700; color: var(--color-success); margin-bottom: 6px;">NET: ₦' + Number(f.net_rate).toLocaleString() + '</div>' : ''}
+              ${isAgent ? '<div style="font-size: 0.75rem; font-weight: 700; color: var(--color-success); margin-bottom: 6px;">NET: ' + formatMoney(f.net_rate) + '</div>' : ''}
               <button type="button" class="btn btn-gold" style="width: 100%; padding: 8px 16px; font-weight: 700; border-radius: 8px;" onclick="selectFlightForCheckout(${JSON.stringify(f).replace(/"/g, '&quot;')})">
                 Select
               </button>
@@ -1847,7 +1938,7 @@ async function loadSearchResults() {
               <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                 <div>
                   <div style="font-size: 0.75rem; color: var(--color-slate-muted); text-transform: uppercase;">PER NIGHT</div>
-                  <div style="font-weight: 700; font-size: 1.15rem; color: var(--color-primary);">NGN 125,000</div>
+                  <div style="font-weight: 700; font-size: 1.15rem; color: var(--color-primary);">${formatMoney(125000)}</div>
                 </div>
                 <button type="button" class="btn btn-gold" style="padding: 6px 20px; font-weight: 700; border-radius: 6px;" onclick="event.stopPropagation(); navigateTo('hotel-detail');">Add</button>
               </div>
@@ -1870,7 +1961,7 @@ async function loadSearchResults() {
               <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                 <div>
                   <div style="font-size: 0.75rem; color: var(--color-slate-muted); text-transform: uppercase;">PER NIGHT</div>
-                  <div style="font-weight: 700; font-size: 1.15rem; color: var(--color-primary);">NGN 89,500</div>
+                  <div style="font-weight: 700; font-size: 1.15rem; color: var(--color-primary);">${formatMoney(89500)}</div>
                 </div>
                 <button type="button" class="btn btn-gold" style="padding: 6px 20px; font-weight: 700; border-radius: 6px;" onclick="event.stopPropagation(); navigateTo('hotel-detail');">Add</button>
               </div>
@@ -2079,7 +2170,7 @@ function getHotelDetailViewHtml() {
           <div class="sticky-booking-box" style="background: #FFFFFF; border: 1px solid var(--color-border-line); border-radius: 14px; padding: 28px; box-shadow: var(--shadow-card); position: sticky; top: 96px;">
             <div style="margin-bottom: 20px;">
               <div style="display: flex; align-items: baseline; gap: 6px;">
-                <span style="font-family: var(--font-display); font-size: 1.85rem; font-weight: 700; color: var(--color-primary);">NGN ${Number(h.price).toLocaleString()}</span>
+                <span style="font-family: var(--font-display); font-size: 1.85rem; font-weight: 700; color: var(--color-primary);">${formatMoney(h.price)}</span>
                 <span style="color: var(--color-slate-muted); font-size: 0.9rem;">/ night</span>
               </div>
               <div style="font-size: 0.85rem; color: var(--color-slate-muted); margin-top: 2px;">Sep 3 – Sep 12 (9 nights)</div>
@@ -2115,16 +2206,16 @@ function getHotelDetailViewHtml() {
 
             <div style="border-top: 1px solid var(--color-border-line); padding-top: 16px; display: grid; gap: 10px; font-size: 0.9rem;">
               <div style="display: flex; justify-content: space-between; color: var(--color-slate-muted);">
-                <span>NGN ${Number(h.price).toLocaleString()} × 9 nights</span>
-                <span style="color: var(--color-ink-text); font-weight: 600;">NGN 1,125,000</span>
+                <span>${formatMoney(h.price)} × 9 nights</span>
+                <span style="color: var(--color-ink-text); font-weight: 600;">${formatMoney(h.price * 9)}</span>
               </div>
               <div style="display: flex; justify-content: space-between; color: var(--color-slate-muted);">
                 <span>Service fee</span>
-                <span style="color: var(--color-ink-text); font-weight: 600;">NGN 45,000</span>
+                <span style="color: var(--color-ink-text); font-weight: 600;">${formatMoney(Math.round(h.price * 9 * 0.04))}</span>
               </div>
               <div style="border-top: 1px solid var(--color-border-line); padding-top: 12px; display: flex; justify-content: space-between; font-weight: 700; font-size: 1.15rem; color: var(--color-primary);">
                 <span>Total</span>
-                <span>NGN 1,170,000</span>
+                <span>${formatMoney(Math.round(h.price * 9 * 1.04))}</span>
               </div>
             </div>
 
@@ -2133,7 +2224,7 @@ function getHotelDetailViewHtml() {
                 <span style="background: var(--color-success); color: #FFFFFF; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;">%</span>
                 <div style="font-size: 0.8rem; color: #065F46;">
                   <strong>Agent Rate Active</strong><br>
-                  You are saving NGN 12,500 on this booking
+                  You are saving ${formatMoney(Math.round(h.price * 9 * 0.1))} on this booking
                 </div>
               </div>
             ` : ''}
@@ -2204,7 +2295,7 @@ function getCheckoutViewHtml() {
                   <div style="font-size: 0.85rem; color: var(--color-slate-muted);">${item.class_of_service || (item.nights ? item.nights + ' nights' : (item.rental_days ? item.rental_days + ' days rental' : (item.vehicle_type || 'Confirmed booking')))}</div>
                 </div>
                 <div style="font-weight: 700; font-family: var(--font-display);">
-                  ₦${Number(isAgent ? item.net_rate : item.price).toLocaleString()}
+                  ${formatMoney(isAgent ? item.net_rate : item.price)}
                 </div>
               </div>
             `).join('')}
@@ -2257,7 +2348,7 @@ function getCheckoutViewHtml() {
               <div class="agent-markup-box">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span style="font-size: 0.85rem; font-weight: 600;">Your Net Cost:</span>
-                  <span style="font-weight: 700; color: var(--color-primary);">₦<span id="agent-net-display">${Number(totalNet).toLocaleString()}</span></span>
+                  <span style="font-weight: 700; color: var(--color-primary);"><span id="agent-net-display">${formatMoney(totalNet)}</span></span>
                 </div>
 
                 <div class="markup-slider-row">
@@ -2270,11 +2361,11 @@ function getCheckoutViewHtml() {
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--color-border-line);">
                   <div>
                     <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--color-slate-muted); font-weight: 700;">Client Will Pay:</div>
-                    <div class="client-pay-live">₦<span id="agent-client-pay-display">${Number(Math.round(totalNet * 1.12)).toLocaleString()}</span></div>
+                    <div class="client-pay-live"><span id="agent-client-pay-display">${formatMoney(Math.round(totalNet * 1.12))}</span></div>
                   </div>
                   <div style="text-align: right;">
                     <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--color-success); font-weight: 700;">Your Margin:</div>
-                    <div style="font-weight: 700; color: var(--color-success);">+₦<span id="agent-margin-display">${Number(Math.round(totalNet * 0.12)).toLocaleString()}</span></div>
+                    <div style="font-weight: 700; color: var(--color-success);"><span id="agent-margin-display">+${formatMoney(Math.round(totalNet * 0.12))}</span></div>
                   </div>
                 </div>
 
@@ -2361,22 +2452,22 @@ function getCheckoutViewHtml() {
 
             <div class="fare-line">
               <span>Base Travel Services</span>
-              <span>₦<span id="summary-base-fare">${Number(isAgent ? totalNet : totalRetail).toLocaleString()}</span></span>
+              <span><span id="summary-base-fare">${formatMoney(isAgent ? totalNet : totalRetail)}</span></span>
             </div>
             <div class="fare-line">
               <span>Taxes & Carrier Surcharges</span>
-              <span>₦38,400</span>
+              <span>${formatMoney(38400)}</span>
             </div>
             ${isAgent ? `
               <div class="fare-line" style="color: var(--color-accent-gold);">
                 <span>Agent Configured Markup</span>
-                <span>+₦<span id="summary-markup-amt">${Number(Math.round(totalNet * 0.12)).toLocaleString()}</span></span>
+                <span><span id="summary-markup-amt">+${formatMoney(Math.round(totalNet * 0.12))}</span></span>
               </div>
             ` : ''}
 
             <div class="fare-total-line">
               <span>Total ${isAgent ? '(Client Price)' : 'Due'}</span>
-              <span>₦<span id="summary-total-fare">${Number(isAgent ? Math.round(totalNet * 1.12 + 38400) : totalRetail + 38400).toLocaleString()}</span></span>
+              <span><span id="summary-total-fare">${formatMoney(isAgent ? Math.round(totalNet * 1.12 + 38400) : totalRetail + 38400)}</span></span>
             </div>
 
             <button id="checkout-submit-btn" class="btn btn-gold btn-pill" style="width: 100%; padding: 14px; font-size: 1.05rem; margin-top: 24px;" onclick="submitCheckoutBooking()">
@@ -2440,10 +2531,10 @@ function recalcAgentPricing(markupPct) {
   const margin = Math.round(baseNet * (markupPct / 100));
   const clientPrice = baseNet + margin;
 
-  document.getElementById('agent-client-pay-display').textContent = Number(clientPrice).toLocaleString();
-  document.getElementById('agent-margin-display').textContent = Number(margin).toLocaleString();
-  document.getElementById('summary-markup-amt').textContent = Number(margin).toLocaleString();
-  document.getElementById('summary-total-fare').textContent = Number(clientPrice + 38400).toLocaleString();
+  document.getElementById('agent-client-pay-display').textContent = formatMoney(clientPrice);
+  document.getElementById('agent-margin-display').textContent = '+' + formatMoney(margin);
+  document.getElementById('summary-markup-amt').textContent = '+' + formatMoney(margin);
+  document.getElementById('summary-total-fare').textContent = formatMoney(clientPrice + 38400);
 }
 
 async function submitCheckoutBooking() {
@@ -2519,7 +2610,7 @@ function getBookingConfirmedViewHtml() {
             ✈ Emirates (LOS → DXB) · Round trip · Confirmed Seat
           </div>
           <div style="font-size: 0.9rem; color: var(--color-slate-muted); margin-top: 4px;">
-            Total Charged: <strong>₦${Number(b.total_price).toLocaleString()}</strong>
+            Total Charged: <strong>${formatMoney(b.total_price)}</strong>
           </div>
         </div>
 
@@ -2529,7 +2620,7 @@ function getBookingConfirmedViewHtml() {
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div>
                 <strong style="color: var(--color-primary);">White-Label Client Delivery</strong>
-                <p style="font-size: 0.8rem; color: var(--color-slate-muted);">Send branded PDF/Email with client price (₦${Number(b.total_price).toLocaleString()}) and PNR ${b.pnr}. Net rate is strictly hidden.</p>
+                <p style="font-size: 0.8rem; color: var(--color-slate-muted);">Send branded PDF/Email with client price (${formatMoney(b.total_price)}) and PNR ${b.pnr}. Net rate is strictly hidden.</p>
               </div>
               <button class="btn btn-navy btn-pill" onclick="sendAgentItinerary('${b.booking_ref}')">
                 📧 Send to client
@@ -2825,11 +2916,11 @@ function getBookingDetailViewHtml() {
             <div style="display: grid; gap: 12px; font-size: 0.95rem;">
               <div style="display: flex; justify-content: space-between; color: var(--color-slate-muted);">
                 <span>Base Fare (1 Adult)</span>
-                <span style="color: var(--color-ink-text); font-weight: 600;">₦1,450,000</span>
+                <span style="color: var(--color-ink-text); font-weight: 600;">${formatMoney(Math.round(b.total_price * 0.73))}</span>
               </div>
               <div style="display: flex; justify-content: space-between; color: var(--color-slate-muted);">
                 <span>Taxes & Fees</span>
-                <span style="color: var(--color-ink-text); font-weight: 600;">₦537,700</span>
+                <span style="color: var(--color-ink-text); font-weight: 600;">${formatMoney(Math.round(b.total_price * 0.27))}</span>
               </div>
               <div style="border-top: 1px solid var(--color-border-line); padding-top: 14px; display: flex; justify-content: space-between; align-items: baseline;">
                 <div>
@@ -2837,7 +2928,7 @@ function getBookingDetailViewHtml() {
                   <div style="font-size: 0.8rem; color: var(--color-slate-muted);">Charged to Card •••• 4242</div>
                 </div>
                 <div style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 700; color: var(--color-primary);">
-                  ₦${Number(b.total_price).toLocaleString()}
+                  ${formatMoney(b.total_price)}
                 </div>
               </div>
             </div>
@@ -2940,7 +3031,7 @@ function getAgentDashboardViewHtml() {
         </div>
         <div class="stat-tile" style="background: #FFFFFF; border: 1px solid var(--color-border-line); border-radius: 12px; padding: 22px; box-shadow: var(--shadow-card);">
           <div class="stat-tile-label" style="font-size: 0.75rem; font-weight: 700; color: var(--color-slate-muted); text-transform: uppercase; margin-bottom: 8px;">COMMISSION EARNED</div>
-          <div class="stat-tile-value gold-stat" style="font-family: var(--font-display); font-size: 2.2rem; font-weight: 700; color: var(--color-accent-gold-dark);" id="dash-stat-margin">₦1,240,500</div>
+          <div class="stat-tile-value gold-stat" style="font-family: var(--font-display); font-size: 2.2rem; font-weight: 700; color: var(--color-accent-gold-dark);" id="dash-stat-margin">${formatMoney(1240500)}</div>
         </div>
         <div class="stat-tile" style="background: #FFFFFF; border: 1px solid var(--color-border-line); border-radius: 12px; padding: 22px; box-shadow: var(--shadow-card);">
           <div class="stat-tile-label" style="font-size: 0.75rem; font-weight: 700; color: var(--color-slate-muted); text-transform: uppercase; margin-bottom: 8px;">PENDING APPROVALS</div>
@@ -2990,7 +3081,7 @@ function getAgentDashboardViewHtml() {
                   </span>
                 </td>
                 <td style="padding: 18px 24px; text-align: right; font-weight: 700; color: var(--color-success);">
-                  +₦42,400
+                  +${formatMoney(42400)}
                 </td>
               </tr>
               <tr style="border-bottom: 1px solid var(--color-border-line);">
@@ -3007,7 +3098,7 @@ function getAgentDashboardViewHtml() {
                   </span>
                 </td>
                 <td style="padding: 18px 24px; text-align: right; font-weight: 700; color: var(--color-success);">
-                  +₦12,800
+                  +${formatMoney(12800)}
                 </td>
               </tr>
               <tr style="border-bottom: 1px solid var(--color-border-line);">
@@ -3024,7 +3115,7 @@ function getAgentDashboardViewHtml() {
                   </span>
                 </td>
                 <td style="padding: 18px 24px; text-align: right; font-weight: 700; color: var(--color-success);">
-                  +₦4,500
+                  +${formatMoney(4500)}
                 </td>
               </tr>
               <tr>
@@ -3041,7 +3132,7 @@ function getAgentDashboardViewHtml() {
                   </span>
                 </td>
                 <td style="padding: 18px 24px; text-align: right; font-weight: 700; color: var(--color-success);">
-                  +₦84,200
+                  +${formatMoney(84200)}
                 </td>
               </tr>
             </tbody>
@@ -3068,8 +3159,8 @@ function getAgentDashboardViewHtml() {
                 <div style="font-size: 0.8rem; color: var(--color-slate-muted);">Economy Class</div>
               </div>
               <div style="text-align: right;">
-                <div style="text-decoration: line-through; color: var(--color-slate-muted); font-size: 0.8rem;">₦550,000</div>
-                <div style="font-weight: 700; color: var(--color-success); font-size: 1rem;">₦485,000</div>
+                <div style="text-decoration: line-through; color: var(--color-slate-muted); font-size: 0.8rem;">${formatMoney(550000)}</div>
+                <div style="font-weight: 700; color: var(--color-success); font-size: 1rem;">${formatMoney(485000)}</div>
               </div>
             </div>
 
@@ -3080,8 +3171,8 @@ function getAgentDashboardViewHtml() {
                 <div style="font-size: 0.8rem; color: var(--color-slate-muted);">Standard Room / Night</div>
               </div>
               <div style="text-align: right;">
-                <div style="text-decoration: line-through; color: var(--color-slate-muted); font-size: 0.8rem;">₦180,000</div>
-                <div style="font-weight: 700; color: var(--color-success); font-size: 1rem;">₦154,500</div>
+                <div style="text-decoration: line-through; color: var(--color-slate-muted); font-size: 0.8rem;">${formatMoney(180000)}</div>
+                <div style="font-weight: 700; color: var(--color-success); font-size: 1rem;">${formatMoney(154500)}</div>
               </div>
             </div>
 
@@ -3092,8 +3183,8 @@ function getAgentDashboardViewHtml() {
                 <div style="font-size: 0.8rem; color: var(--color-slate-muted);">Private Sedan (LHR)</div>
               </div>
               <div style="text-align: right;">
-                <div style="text-decoration: line-through; color: var(--color-slate-muted); font-size: 0.8rem;">₦45,000</div>
-                <div style="font-weight: 700; color: var(--color-success); font-size: 1rem;">₦38,000</div>
+                <div style="text-decoration: line-through; color: var(--color-slate-muted); font-size: 0.8rem;">${formatMoney(45000)}</div>
+                <div style="font-weight: 700; color: var(--color-success); font-size: 1rem;">${formatMoney(38000)}</div>
               </div>
             </div>
 
@@ -3162,7 +3253,7 @@ async function loadAgentDashboardData() {
     document.getElementById('agent-dash-name').textContent = data.agency.contact_name;
     document.getElementById('agent-dash-agency').textContent = data.agency.agency_name;
     document.getElementById('dash-stat-bookings').textContent = data.stats.bookings_this_month;
-    document.getElementById('dash-stat-margin').textContent = `₦${Number(data.stats.margin_earned_this_month).toLocaleString()}`;
+    document.getElementById('dash-stat-margin').textContent = formatMoney(data.stats.margin_earned_this_month);
     document.getElementById('dash-stat-pending').textContent = data.stats.pending_approvals;
 
     // Load bookings table
@@ -3184,7 +3275,7 @@ async function loadAgentDashboardData() {
             </span>
           </td>
           <td style="padding: 18px 24px; text-align: right; font-weight: 700; color: var(--color-success);">
-            +₦${Number(b.margin).toLocaleString()}
+            +${formatMoney(b.margin)}
           </td>
         </tr>
       `).join('');
@@ -3407,9 +3498,9 @@ async function loadAdminViewData() {
                   <td>${b.client_name}<br><span style="font-size: 0.75rem; color: var(--color-slate-muted);">${b.agency_name || 'B2C Direct'}</span></td>
                   <td>${b.vertical}</td>
                   <td><span class="status-pill ${b.status}">${b.status}</span></td>
-                  <td>₦${Number(b.net_rate).toLocaleString()}</td>
-                  <td><strong>₦${Number(b.client_price).toLocaleString()}</strong></td>
-                  <td style="color: var(--color-success); font-weight: 700;">+₦${Number(b.margin).toLocaleString()}</td>
+                  <td>${formatMoney(b.net_rate)}</td>
+                  <td><strong>${formatMoney(b.client_price)}</strong></td>
+                  <td style="color: var(--color-success); font-weight: 700;">+${formatMoney(b.margin)}</td>
                 </tr>
               `).join('')}
             </tbody>

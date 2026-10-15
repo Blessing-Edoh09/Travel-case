@@ -39,8 +39,13 @@
 
       <!-- Right header actions -->
       <div class="header-actions">
-        <div class="currency-badge">
-          <span>NGN</span> <span style="opacity: 0.35;">|</span> <span>🌐</span>
+        <div class="currency-picker-container" id="currency-picker-wrapper">
+          <button type="button" class="currency-badge-btn" id="header-currency-btn" onclick="toggleCurrencyDropdown(event)">
+            <span id="header-currency-code">NGN</span> <span style="opacity: 0.35;">|</span> <span id="header-currency-flag">🇳🇬</span> <span style="font-size: 0.68rem; margin-left: 2px;">⌵</span>
+          </button>
+          <div class="currency-dropdown-panel" id="currency-dropdown-panel" style="display: none;" onclick="event.stopPropagation()">
+            <!-- Populated dynamically via app.js -->
+          </div>
         </div>
         
         <button id="nav-manage-booking" class="nav-ghost-link" onclick="navigateTo('manage-booking')">

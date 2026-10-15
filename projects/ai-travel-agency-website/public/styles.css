@@ -185,12 +185,18 @@ h1, h2, h3, h4, .price-display, .font-heading {
   flex-shrink: 0;
 }
 
-.currency-badge {
+/* Currency Picker Dropdown */
+.currency-picker-container {
+  position: relative;
+  display: inline-flex;
+}
+
+.currency-badge-btn {
   font-size: 0.82rem;
-  font-weight: 600;
-  color: #4B5563;
+  font-weight: 700;
+  color: #374151;
   background: #F3F4F6;
-  border: 1px solid #E5E7EB;
+  border: 1.5px solid #E5E7EB;
   padding: 6px 12px;
   border-radius: var(--radius-pill);
   display: flex;
@@ -198,6 +204,90 @@ h1, h2, h3, h4, .price-display, .font-heading {
   gap: 6px;
   white-space: nowrap;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-body);
+}
+
+.currency-badge-btn:hover {
+  background: #EFF6FF;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.currency-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 250px;
+  background: #FFFFFF;
+  border: 1.5px solid var(--color-border-line);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(11, 37, 69, 0.16);
+  padding: 8px;
+  z-index: 2200;
+  animation: pickerFadeIn 0.15s ease-out;
+}
+
+.currency-dropdown-header {
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-slate-muted);
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #F3F4F6;
+  margin-bottom: 4px;
+}
+
+.currency-option-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.currency-option-item:hover {
+  background: #F3F4F6;
+}
+
+.currency-option-item.selected {
+  background: #EFF6FF;
+  border-left: 3px solid var(--color-accent-gold);
+}
+
+.currency-option-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.currency-flag {
+  font-size: 1.15rem;
+}
+
+.currency-code {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--color-ink-text);
+}
+
+.currency-name {
+  font-size: 0.76rem;
+  color: var(--color-slate-muted);
+}
+
+.currency-symbol-pill {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.82rem;
+  background: #F3F4F6;
+  color: var(--color-primary);
+  padding: 2px 7px;
+  border-radius: 4px;
 }
 
 .nav-ghost-link {
