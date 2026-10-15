@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Travel Case — Every Trip, One Trusted Case | Full-Service OTA & TravelDoc AI</title>
   <meta name="description" content="Travel Case is a full-service Online Travel Agency offering flights, hotels, car rentals, activities, and embedded AI travel-document verification.">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css?v=2.0.2">
   <link rel="icon" type="image/png" href="/assets/logo.png">
 </head>
 <body>
@@ -40,8 +40,8 @@
       <!-- Right header actions -->
       <div class="header-actions">
         <div class="currency-picker-container" id="currency-picker-wrapper">
-          <button type="button" class="currency-badge-btn" id="header-currency-btn" onclick="toggleCurrencyDropdown(event)">
-            <span id="header-currency-code">NGN</span> <span style="opacity: 0.35;">|</span> <span id="header-currency-flag">🇳🇬</span> <span style="font-size: 0.68rem; margin-left: 2px;">⌵</span>
+          <button type="button" class="currency-badge-btn" id="header-currency-btn" onclick="toggleCurrencyDropdown(event)" title="Change display currency" aria-label="Select Currency">
+            <span id="header-currency-code">NGN</span> <span style="opacity: 0.35;">|</span> <span id="header-currency-flag">🇳🇬</span> <span style="font-size: 0.65rem; margin-left: 3px;">▼</span>
           </button>
           <div class="currency-dropdown-panel" id="currency-dropdown-panel" style="display: none;" onclick="event.stopPropagation()">
             <!-- Populated dynamically via app.js -->
@@ -250,6 +250,6 @@
     </div>
   </footer>
 
-  <script src="/app.js"></script>
+  <script src="/app.js?v=2.0.2"></script>
 </body>
 </html>

@@ -54,6 +54,101 @@ const state = {
   lastBooking: null
 };
 
+// --- Multi-Currency System ---
+const SUPPORTED_CURRENCIES = {
+  NGN: { code: 'NGN', symbol: '₦', name: 'Nigerian Naira', flag: '🇳🇬', rate: 1.0 },
+  USD: { code: 'USD', symbol: '$', name: 'US Dollar', flag: '🇺🇸', rate: 1 / 1500 },
+  GBP: { code: 'GBP', symbol: '£', name: 'British Pound', flag: '🇬🇧', rate: 1 / 1950 },
+  EUR: { code: 'EUR', symbol: '€', name: 'Euro', flag: '🇪🇺', rate: 1 / 1650 },
+  CAD: { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar', flag: '🇨🇦', rate: 1 / 1100 },
+  GHS: { code: 'GHS', symbol: 'GH₵', name: 'Ghanaian Cedi', flag: '🇬🇭', rate: 1 / 100 },
+  KES: { code: 'KES', symbol: 'KSh', name: 'Kenyan Shilling', flag: '🇰🇪', rate: 1 / 11.5 },
+  AED: { code: 'AED', symbol: 'AED', name: 'UAE Dirham', flag: '🇦🇪', rate: 1 / 408 },
+  ZAR: { code: 'ZAR', symbol: 'R', name: 'South African Rand', flag: '🇿🇦', rate: 1 / 85 }
+};
+
+function formatMoney(amountInNgn, currency = state.currency || 'NGN') {
+  if (amountInNgn === null || amountInNgn === undefined || isNaN(amountInNgn)) return '—';
+  const curr = SUPPORTED_CURRENCIES[currency] || SUPPORTED_CURRENCIES.NGN;
+  const converted = Math.round(Number(amountInNgn) * curr.rate);
+  return `${curr.symbol}${converted.toLocaleString()}`;
+}
+
+function toggleCurrencyDropdown(event) {
+  if (event) event.stopPropagation();
+  state.isCurrencyDropdownOpen = !state.isCurrencyDropdownOpen;
+  renderCurrencyDropdown();
+}
+
+function closeCurrencyDropdown() {
+  state.isCurrencyDropdownOpen = false;
+  const panel = document.getElementById('currency-dropdown-panel');
+  if (panel) panel.style.display = 'none';
+  const btn = document.getElementById('header-currency-btn');
+  if (btn) btn.classList.remove('active');
+}
+
+function selectCurrency(code, event) {
+  if (event) event.stopPropagation();
+  if (SUPPORTED_CURRENCIES[code]) {
+    state.currency = code;
+    localStorage.setItem('tc_currency', code);
+    updateHeaderCurrencyBadge();
+    closeCurrencyDropdown();
+    renderCurrentView();
+  }
+}
+
+function updateHeaderCurrencyBadge() {
+  const curr = SUPPORTED_CURRENCIES[state.currency] || SUPPORTED_CURRENCIES.NGN;
+  const codeEl = document.getElementById('header-currency-code');
+  const flagEl = document.getElementById('header-currency-flag');
+  if (codeEl) codeEl.textContent = curr.code;
+  if (flagEl) flagEl.textContent = curr.flag;
+}
+
+function renderCurrencyDropdown() {
+  const panel = document.getElementById('currency-dropdown-panel');
+  const btn = document.getElementById('header-currency-btn');
+  if (!panel) return;
+
+  if (!state.isCurrencyDropdownOpen) {
+    panel.style.display = 'none';
+    if (btn) btn.classList.remove('active');
+    return;
+  }
+
+  if (btn) btn.classList.add('active');
+
+  const currencies = Object.values(SUPPORTED_CURRENCIES);
+  panel.innerHTML = `
+    <div class="currency-dropdown-header">
+      Select Display Currency
+    </div>
+    <div style="max-height: 280px; overflow-y: auto;">
+      ${currencies.map(c => `
+        <div class="currency-option-item ${state.currency === c.code ? 'selected' : ''}" onclick="selectCurrency('${c.code}', event)">
+          <div class="currency-option-left">
+            <span class="currency-flag">${c.flag}</span>
+            <div>
+              <span class="currency-code">${c.code}</span>
+              <span class="currency-name">${c.name}</span>
+            </div>
+          </div>
+          <span class="currency-symbol-pill">${c.symbol}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  panel.style.display = 'block';
+}
+
+// Global browser window bindings
+window.toggleCurrencyDropdown = toggleCurrencyDropdown;
+window.closeCurrencyDropdown = closeCurrencyDropdown;
+window.selectCurrency = selectCurrency;
+window.formatMoney = formatMoney;
+
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', async () => {
   await checkSession();
@@ -446,89 +541,6 @@ function getHomeViewHtml() {
       </div>
     </footer>
   `;
-}
-
-// --- Multi-Currency System ---
-const SUPPORTED_CURRENCIES = {
-  NGN: { code: 'NGN', symbol: '₦', name: 'Nigerian Naira', flag: '🇳🇬', rate: 1.0 },
-  USD: { code: 'USD', symbol: '$', name: 'US Dollar', flag: '🇺🇸', rate: 1 / 1500 },
-  GBP: { code: 'GBP', symbol: '£', name: 'British Pound', flag: '🇬🇧', rate: 1 / 1950 },
-  EUR: { code: 'EUR', symbol: '€', name: 'Euro', flag: '🇪🇺', rate: 1 / 1650 },
-  CAD: { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar', flag: '🇨🇦', rate: 1 / 1100 },
-  GHS: { code: 'GHS', symbol: 'GH₵', name: 'Ghanaian Cedi', flag: '🇬🇭', rate: 1 / 100 },
-  KES: { code: 'KES', symbol: 'KSh', name: 'Kenyan Shilling', flag: '🇰🇪', rate: 1 / 11.5 },
-  AED: { code: 'AED', symbol: 'AED', name: 'UAE Dirham', flag: '🇦🇪', rate: 1 / 408 },
-  ZAR: { code: 'ZAR', symbol: 'R', name: 'South African Rand', flag: '🇿🇦', rate: 1 / 85 }
-};
-
-function formatMoney(amountInNgn, currency = state.currency || 'NGN') {
-  if (amountInNgn === null || amountInNgn === undefined || isNaN(amountInNgn)) return '—';
-  const curr = SUPPORTED_CURRENCIES[currency] || SUPPORTED_CURRENCIES.NGN;
-  const converted = Math.round(Number(amountInNgn) * curr.rate);
-  return `${curr.symbol}${converted.toLocaleString()}`;
-}
-
-function toggleCurrencyDropdown(event) {
-  if (event) event.stopPropagation();
-  state.isCurrencyDropdownOpen = !state.isCurrencyDropdownOpen;
-  renderCurrencyDropdown();
-}
-
-function closeCurrencyDropdown() {
-  state.isCurrencyDropdownOpen = false;
-  const panel = document.getElementById('currency-dropdown-panel');
-  if (panel) panel.style.display = 'none';
-}
-
-function selectCurrency(code, event) {
-  if (event) event.stopPropagation();
-  if (SUPPORTED_CURRENCIES[code]) {
-    state.currency = code;
-    localStorage.setItem('tc_currency', code);
-    updateHeaderCurrencyBadge();
-    closeCurrencyDropdown();
-    renderCurrentView();
-  }
-}
-
-function updateHeaderCurrencyBadge() {
-  const curr = SUPPORTED_CURRENCIES[state.currency] || SUPPORTED_CURRENCIES.NGN;
-  const codeEl = document.getElementById('header-currency-code');
-  const flagEl = document.getElementById('header-currency-flag');
-  if (codeEl) codeEl.textContent = curr.code;
-  if (flagEl) flagEl.textContent = curr.flag;
-}
-
-function renderCurrencyDropdown() {
-  const panel = document.getElementById('currency-dropdown-panel');
-  if (!panel) return;
-
-  if (!state.isCurrencyDropdownOpen) {
-    panel.style.display = 'none';
-    return;
-  }
-
-  const currencies = Object.values(SUPPORTED_CURRENCIES);
-  panel.innerHTML = `
-    <div class="currency-dropdown-header">
-      Select Display Currency
-    </div>
-    <div style="max-height: 280px; overflow-y: auto;">
-      ${currencies.map(c => `
-        <div class="currency-option-item ${state.currency === c.code ? 'selected' : ''}" onclick="selectCurrency('${c.code}', event)">
-          <div class="currency-option-left">
-            <span class="currency-flag">${c.flag}</span>
-            <div>
-              <span class="currency-code">${c.code}</span>
-              <span class="currency-name">${c.name}</span>
-            </div>
-          </div>
-          <span class="currency-symbol-pill">${c.symbol}</span>
-        </div>
-      `).join('')}
-    </div>
-  `;
-  panel.style.display = 'block';
 }
 
 // --- Curated Location & Airport Hub Datasets ---

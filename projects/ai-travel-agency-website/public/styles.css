@@ -209,10 +209,13 @@ h1, h2, h3, h4, .price-display, .font-heading {
   font-family: var(--font-body);
 }
 
-.currency-badge-btn:hover {
+.currency-badge-btn:hover,
+.currency-badge-btn:focus,
+.currency-badge-btn.active {
   background: #EFF6FF;
   border-color: var(--color-primary);
   color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(11, 37, 69, 0.08);
 }
 
 .currency-dropdown-panel {
