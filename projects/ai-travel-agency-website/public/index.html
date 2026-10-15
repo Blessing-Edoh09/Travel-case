@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Case — Every Trip, One Trusted Case | Full-Service OTA & TravelDoc AI</title>
+  <meta name="description" content="Travel Case is a full-service Online Travel Agency offering flights, hotels, car rentals, activities, and embedded AI travel-document verification.">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="icon" type="image/png" href="/assets/logo.png">
+</head>
+<body>
+
+  <!-- Mandatory Demo Disclaimer Banner -->
+  <div class="demo-banner">
+    <span>⚠️ <strong>DEMO DATA, NOT FOR REAL TRAVEL DECISIONS</strong> — GDS and immigration rules presented are simulated engineering prototypes.</span>
+    <button class="btn btn-pill btn-traveldoc-trigger" style="padding: 4px 12px; font-size: 0.75rem; margin-left: 12px;" onclick="openTravelDocModal()">
+      Open TravelDoc AI
+    </button>
+  </div>
+
+  <!-- Primary Site Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="logo-lockup" onclick="navigateTo('home')">
+        <img src="/assets/logo.png" alt="TravelCase Logo" class="brand-logo-img">
+        <span id="header-agent-badge" class="agent-badge-tag" style="display: none;">AGENT</span>
+      </div>
+
+      <!-- Center navigation links -->
+      <nav id="main-nav-links">
+        <ul class="nav-links">
+          <li><a class="nav-link active" onclick="navigateTo('home')">Explore</a></li>
+          <li><a class="nav-link" onclick="quickSearchVertical('flights')">Flights</a></li>
+          <li><a class="nav-link" onclick="quickSearchVertical('hotels')">Hotels</a></li>
+          <li><a class="nav-link" onclick="quickSearchVertical('cars')">Cars</a></li>
+          <li><a class="nav-link" onclick="quickSearchVertical('activities')">Activities</a></li>
+        </ul>
+      </nav>
+
+      <!-- Right header actions -->
+      <div class="header-actions">
+        <div class="currency-badge">
+          <span>NGN</span> <span style="opacity: 0.35;">|</span> <span>🌐</span>
+        </div>
+        
+        <button id="nav-manage-booking" class="nav-ghost-link" onclick="navigateTo('manage-booking')">
+          Manage booking
+        </button>
+
+        <button id="nav-login-btn" class="nav-ghost-link" onclick="openLoginModal()">
+          Log in
+        </button>
+
+        <button id="nav-agent-portal-btn" class="btn btn-gold" style="border-radius: 8px; padding: 8px 18px; font-weight: 600;" onclick="handleAgentPortalClick()">
+          Agent portal
+        </button>
+
+        <button id="nav-admin-link" class="nav-ghost-link" style="font-size: 0.85rem;" onclick="navigateTo('admin')">
+          Admin
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main id="app-view">
+    <!-- Content injected dynamically via app.js -->
+  </main>
+
+  <!-- TravelDoc AI Slide-over / Modal -->
+  <div id="traveldoc-modal" class="modal-overlay">
+    <div class="traveldoc-modal">
+      <div class="traveldoc-header">
+        <div class="traveldoc-title">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span>TravelDoc AI — Visa & Document Checker</span>
+        </div>
+        <button class="btn btn-outline-white" style="padding: 4px 10px;" onclick="closeTravelDocModal()">✕</button>
+      </div>
+
+      <div class="traveldoc-body">
+        <div style="background: #FEF3C7; color: #92400E; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; margin-bottom: 20px;">
+          ⚖ <strong>DEMO DATA, NOT FOR REAL TRAVEL DECISIONS.</strong> Official immigration rules change frequently. Approval or entry is never guaranteed.
+        </div>
+
+        <div id="traveldoc-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;">
+          <div class="input-box">
+            <label>Passport Country</label>
+            <select id="td-passport">
+              <option value="Nigeria" selected>Nigeria (Nigerian Citizen)</option>
+              <option value="Ghana">Ghana</option>
+              <option value="Kenya">Kenya</option>
+              <option value="United Kingdom">United Kingdom</option>
+              <option value="United States">United States</option>
+            </select>
+          </div>
+
+          <div class="input-box">
+            <label>Destination Country</label>
+            <select id="td-destination">
+              <option value="France" selected>France (Schengen Area)</option>
+              <option value="United Arab Emirates">United Arab Emirates (Dubai)</option>
+              <option value="United Kingdom">United Kingdom</option>
+              <option value="Kenya">Kenya</option>
+              <option value="Japan">Japan (Unsupported Demo Route)</option>
+            </select>
+          </div>
+
+          <div class="input-box">
+            <label>Travel Purpose</label>
+            <select id="td-purpose">
+              <option value="tourism" selected>Tourism / Leisure</option>
+              <option value="business">Business / Conference</option>
+              <option value="transit">Airport Transit</option>
+              <option value="study">Study (Consular Review Required)</option>
+              <option value="work">Work / Employment (Consular Review)</option>
+            </select>
+          </div>
+
+          <div class="input-box">
+            <label>Transit Country (Optional)</label>
+            <select id="td-transit">
+              <option value="">None / Direct Flight</option>
+              <option value="United Kingdom">United Kingdom (London LHR)</option>
+              <option value="France">France (Paris CDG)</option>
+              <option value="Qatar">Qatar (Doha DOH)</option>
+            </select>
+          </div>
+
+          <div class="input-box" style="grid-column: span 2;">
+            <label>Personal Circumstances / Free Text Note</label>
+            <input type="text" id="td-notes" placeholder="e.g. Traveling for 10 days with confirmed hotel booking. (Do NOT enter passport numbers or card data)">
+            <span style="font-size: 0.75rem; color: var(--color-slate-muted); margin-top: 4px;">
+              Privacy Safe: Sensitive data (passport numbers, payment cards, passwords) will be automatically detected and redacted.
+            </span>
+          </div>
+        </div>
+
+        <button class="btn btn-navy btn-pill" style="width: 100%; margin-bottom: 24px;" onclick="runTravelDocCheck()">
+          Check Required Travel Documents
+        </button>
+
+        <!-- TravelDoc Results Container -->
+        <div id="traveldoc-results" style="display: none;">
+          <!-- Injected via JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agent Login / Authentication Modal -->
+  <div id="auth-modal" class="modal-overlay">
+    <div style="background: #FFFFFF; width: 90%; max-width: 480px; border-radius: var(--radius-card); overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+      <div style="background: var(--color-primary); color: #FFFFFF; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center;">
+        <h3 id="auth-modal-title" style="font-size: 1.25rem;">Agent Portal Login</h3>
+        <button class="btn btn-outline-white" style="padding: 4px 10px;" onclick="closeAuthModal()">✕</button>
+      </div>
+
+      <div style="padding: 24px;">
+        <div id="auth-error" class="error-banner-inline" style="display: none; margin-bottom: 16px;"></div>
+
+        <div class="input-box" style="margin-bottom: 16px;">
+          <label>Email Address</label>
+          <input type="email" id="auth-email" value="chidi@skylinetravel.ng">
+        </div>
+
+        <div class="input-box" style="margin-bottom: 24px;">
+          <label>Password</label>
+          <input type="password" id="auth-password" value="Password123!">
+        </div>
+
+        <button class="btn btn-gold btn-pill" style="width: 100%; margin-bottom: 16px;" onclick="handleLoginSubmit()">
+          Log in to Agent Portal
+        </button>
+
+        <div style="text-align: center; font-size: 0.85rem; color: var(--color-slate-muted);">
+          <span>New travel agency? </span>
+          <a href="#" style="color: var(--color-secondary); font-weight: 600;" onclick="switchToRegisterAgent()">Register for trade access</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <div class="logo-lockup" style="margin-bottom: 16px;">
+            <div class="logo-badge">
+              <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="7" width="18" height="14" rx="3" ry="3"></rect>
+                <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </div>
+            <span class="logo-text">Travel Case</span>
+          </div>
+          <p style="font-size: 0.85rem; line-height: 1.6; max-width: 340px;">
+            Every trip, one trusted case. Full-service online travel agency built on Sabre's GDS infrastructure, integrated with TravelDoc AI for deterministic travel document clarity.
+          </p>
+        </div>
+
+        <div class="footer-col">
+          <h4>Explore</h4>
+          <ul class="footer-links">
+            <li><a onclick="quickSearchVertical('flights')">Flights & Airfare</a></li>
+            <li><a onclick="quickSearchVertical('hotels')">Hotels & Resorts</a></li>
+            <li><a onclick="quickSearchVertical('cars')">Car Rentals</a></li>
+            <li><a onclick="quickSearchVertical('activities')">Activities & Tours</a></li>
+            <li><a onclick="openTravelDocModal()">Visa & TravelDoc AI</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Travelers</h4>
+          <ul class="footer-links">
+            <li><a onclick="navigateTo('manage-booking')">Manage My Booking</a></li>
+            <li><a onclick="alert('e-Ticket support available 24/7')">e-Ticket Help</a></li>
+            <li><a onclick="openTravelDocModal()">Visa Requirement Checker</a></li>
+            <li><a onclick="alert('Standard Baggage Allowances: 2x23kg on international sectors.')">Baggage Guidelines</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>For Agents & Corporate</h4>
+          <ul class="footer-links">
+            <li><a onclick="handleAgentPortalClick()">Agent Wholesale Portal</a></li>
+            <li><a onclick="switchToRegisterAgent()">Agency Registration</a></li>
+            <li><a onclick="navigateTo('admin')">Admin Back-Office</a></li>
+            <li><a onclick="openCoverageManifest()">Coverage Manifest</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 Travel Case Inc. Built on Sabre GDS architecture. Primary market: West Africa (NGN) & Global.</div>
+        <div style="display: flex; gap: 16px;">
+          <span>Privacy & NDPR</span>
+          <span>Terms of Trade</span>
+          <span>Security & Tokenization</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
