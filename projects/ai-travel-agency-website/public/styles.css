@@ -56,9 +56,9 @@ h1, h2, h3, h4, .price-display, .font-heading {
 
 /* Layout Containers */
 .container {
-  max-width: 1200px;
+  max-width: 1260px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 20px;
 }
 
 /* Header & Navigation per Figma Specs */
@@ -77,14 +77,17 @@ h1, h2, h3, h4, .price-display, .font-heading {
   align-items: center;
   justify-content: space-between;
   height: 72px;
+  gap: 20px;
 }
 
 .logo-lockup {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   text-decoration: none;
   cursor: pointer;
+  flex-shrink: 0;
+  margin-right: 16px;
 }
 
 .brand-logo-img {
@@ -117,30 +120,42 @@ h1, h2, h3, h4, .price-display, .font-heading {
   color: var(--color-primary);
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   padding: 3px 8px;
   border-radius: var(--radius-pill);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-left: 6px;
+  white-space: nowrap;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+#main-nav-links {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 24px;
   list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .nav-link {
   color: #4B5563;
   text-decoration: none;
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 600;
   padding: 8px 0;
   position: relative;
   transition: color 0.2s;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .nav-link:hover {
@@ -149,7 +164,7 @@ h1, h2, h3, h4, .price-display, .font-heading {
 
 .nav-link.active {
   color: var(--color-primary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .nav-link.active::after {
@@ -166,12 +181,13 @@ h1, h2, h3, h4, .price-display, .font-heading {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .currency-badge {
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: 0.82rem;
+  font-weight: 600;
   color: #4B5563;
   background: #F3F4F6;
   border: 1px solid #E5E7EB;
@@ -180,6 +196,8 @@ h1, h2, h3, h4, .price-display, .font-heading {
   display: flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .nav-ghost-link {
@@ -187,11 +205,15 @@ h1, h2, h3, h4, .price-display, .font-heading {
   border: none;
   color: #4B5563;
   font-family: var(--font-body);
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
   padding: 6px 10px;
   transition: color 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
 }
 
 .nav-ghost-link:hover {

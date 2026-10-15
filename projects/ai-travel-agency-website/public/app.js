@@ -104,19 +104,52 @@ async function checkSession() {
 function updateHeaderAgentState() {
   const badge = document.getElementById('header-agent-badge');
   const agentBtn = document.getElementById('nav-agent-portal-btn');
+  const loginBtn = document.getElementById('nav-login-btn');
+
   if (state.currentUser && state.currentUser.role === 'agent') {
-    if (badge) badge.style.display = 'inline-block';
+    if (badge) badge.style.display = 'inline-flex';
     if (agentBtn) {
       agentBtn.textContent = 'Agent Dashboard';
-      agentBtn.classList.remove('btn-gold');
-      agentBtn.classList.add('btn-outline-white');
+      agentBtn.className = 'btn btn-navy';
+      agentBtn.style.borderRadius = '8px';
+      agentBtn.style.padding = '8px 16px';
+      agentBtn.style.fontWeight = '600';
+      agentBtn.style.whiteSpace = 'nowrap';
+      agentBtn.style.display = 'inline-flex';
+    }
+    if (loginBtn) {
+      loginBtn.textContent = 'Log out';
+      loginBtn.onclick = logout;
+    }
+  } else if (state.currentUser) {
+    if (badge) badge.style.display = 'none';
+    if (agentBtn) {
+      agentBtn.textContent = 'Agent portal';
+      agentBtn.className = 'btn btn-gold';
+      agentBtn.style.borderRadius = '8px';
+      agentBtn.style.padding = '8px 16px';
+      agentBtn.style.fontWeight = '600';
+      agentBtn.style.whiteSpace = 'nowrap';
+      agentBtn.style.display = 'inline-flex';
+    }
+    if (loginBtn) {
+      loginBtn.textContent = 'Log out';
+      loginBtn.onclick = logout;
     }
   } else {
     if (badge) badge.style.display = 'none';
     if (agentBtn) {
       agentBtn.textContent = 'Agent portal';
-      agentBtn.classList.add('btn-gold');
-      agentBtn.classList.remove('btn-outline-white');
+      agentBtn.className = 'btn btn-gold';
+      agentBtn.style.borderRadius = '8px';
+      agentBtn.style.padding = '8px 16px';
+      agentBtn.style.fontWeight = '600';
+      agentBtn.style.whiteSpace = 'nowrap';
+      agentBtn.style.display = 'inline-flex';
+    }
+    if (loginBtn) {
+      loginBtn.textContent = 'Log in';
+      loginBtn.onclick = openLoginModal;
     }
   }
 }
